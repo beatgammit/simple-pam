@@ -11,26 +11,21 @@ int main(int argc, char *argv[]) {
 	pam_handle_t* pamh = NULL;
 	int retval;
 	const char* user = "nobody";
+	const char* service = "login";
 
-	if(argc != 2) {
-		printf("Usage: app [username]\n");
+	if(argc != 3) {
+		printf("Usage: test service username\n");
 		exit(1);
 	}
 
-	user = argv[1];
+	service = argv[1];
+	user = argv[2];
 
-	retval = pam_start("check_user", user, &conv, &pamh);
+	retval = pam_start(service, user, &conv, &pamh);
 
 	// Are the credentials correct?
 	if (retval == PAM_SUCCESS) {
-		printf("Credentials accepted.\n");
 		retval = pam_authenticate(pamh, 0);
-	}
-
-	// Can the accound be used at this time?
-	if (retval == PAM_SUCCESS) {
-		printf("Account is valid.\n");
-		retval = pam_acct_mgmt(pamh, 0);
 	}
 
 	// Did everything work?
@@ -39,6 +34,15 @@ int main(int argc, char *argv[]) {
 	} else {
 		printf("Not Authenticated\n");
 	}
+
+	// Can the account be used at this time?
+	retval = pam_acct_mgmt(pamh, 0);
+	if (retval == PAM_SUCCESS) {
+		printf("Account is valid.\n");
+	} else {
+		printf("Account is denied.\n");
+	}
+
 
 	// close PAM (end session)
 	if (pam_end(pamh, retval) != PAM_SUCCESS) {
