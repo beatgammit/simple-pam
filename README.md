@@ -9,7 +9,7 @@ To build, either use the build scripts or use these commands:
 
 `gcc -fPIC -fno-stack-protector -c src/mypam.c`
 
-`sudo ld -x --shared -o /lib/security/mypam.so mypam.o`
+`ld -x --shared -lpam -o /tmp/pam_mypam.so mypam.o`
 
 The first command builds the object file in the current directory and the second links it with PAM. Since it's a shared library, PAM can use it on the fly without having to restart.
 
@@ -23,21 +23,25 @@ OR
 
 The test program is valid C, so it could be compiled using gcc or g++. I like g++ better because I'll probably want to extend it and I like C++ better.
 
+The test program requires the service name and username as arguments.
+
+
 Simple Usage
 ------------
 
-The build scripts will take care of putting your module where it needs to be, `/lib/security`, so the next thing to do is edit config files.
+The config files are located in `/etc/pam.d/`.
+You can create a new PAM service dedicated by creating ``/etc/pam.d/mypam``.
 
-The config files are located in `/etc/pam.d/` and the one I edited was `/etc/pam.d/common-auth`.
+The test application tests auth and account functionality (although account isn't very interesting). The new file should :
 
-The test application tests auth and account functionality (although account isn't very interesting). At the top of the pam file (or anywhere), put these lines:
+	auth sufficient /tmp/mypam.so
+	account sufficient /tmp/mypam.so
 
-	auth sufficient mypam.so
-	account sufficient mypam.so
 
-I think the account part should technically go in `/etc/pam.d/common-account`, but I put mine in the same place so I'd remember to take them out later.
+To run the test program, just do: `./pam_test mypam backdoor` and you should get some messages saying that you're authenticated!
+Maybe this is how Sam Flynn 'hacked' his father's computer in TRON Legacy =D.
 
-To run the test program, just do: `pam_test backdoor` and you should get some messages saying that you're authenticated! Maybe this is how Sam Flynn 'hacked' his father's computer in TRON Legacy =D.
+On Ubuntu or Debian you can check `tail -f /var/log/auth.log` for errors.
 
 Resources
 =========
